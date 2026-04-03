@@ -1,315 +1,231 @@
-# ROS 2 Multi-Robot Coordination System
+# C++ Robot Simulator + Physics Engine
 
 ## Overview
 
-This project simulates a distributed multi-robot system using ROS 2, focusing on real-time communication, coordination, and task scheduling.
+A lightweight 2D robotics simulation engine built in modern C++.
 
-The goal is to demonstrate systems-level thinking applied to robotics software, including:
+This project focuses on:
 
-* Pub/sub messaging
-* Distributed coordination
-* Real-time constraints
-* Fault tolerance and observability
+* Real-time simulation loops
+* Basic physics (movement + collisions)
+* Multi-agent systems
+* Performance and scalability
+
+The goal is to demonstrate robotics-relevant systems skills without heavy frameworks.
 
 ---
 
-## Architecture
+## Core Features
 
-### High-Level Design
-
-* Multiple robot nodes publish state
-* A central coordinator assigns tasks
-* Communication happens via ROS 2 topics
-
-Core components:
-
-* `robot_node` (C++): publishes state, consumes tasks
-* `coordinator_node` (C++): aggregates state, assigns tasks
-* `simulation` (Gazebo): environment + physics
+* Time-stepped simulation loop
+* Robot kinematics (position, velocity)
+* Collision detection (robot–robot, robot–world)
+* Collision resolution
+* Multi-robot support
 
 ---
 
 ## Tech Stack
 
-* ROS 2 (Humble or Iron)
-* C++17
-* Python (optional tooling)
-* Gazebo (simulation)
+* C++17+
+* CMake
+* (Optional) Eigen (linear algebra)
+* (Optional) SDL/OpenGL (visualization)
 
 ---
 
-## Repository Structure (Target)
+## Project Structure (Target)
 
 ```
-ros2_multi_robot/
+robot_sim/
 ├── src/
-│   ├── robot_msgs/          # Custom message definitions
-│   ├── robot_node/          # Robot implementation
-│   ├── coordinator_node/    # Task scheduler
-│   └── simulation/          # Gazebo world + configs
-├── launch/
-│   ├── multi_robot.launch.py
-├── config/
-│   ├── params.yaml
-├── docs/
-│   ├── architecture.md
-│   ├── design_decisions.md
+│  ├── core/    # simulation loop, world
+│  ├── physics/ # collision detection/resolution
+│  ├── models/  # robot definitions
+│  ├── utils/   # math helpers (Vec2, etc)
+├── include/
+├── tests/
+├── CMakeLists.txt
 ├── README.md
 ```
 
 ---
 
-## Roadmap (Execution Plan)
+## Core Concepts
 
-This section doubles as a checklist for building the system.
-
----
-
-### 1. ROS 2 Fundamentals
-
-Goal: Understand core ROS 2 abstractions
-
-Tasks:
-
-* [ ] Install ROS 2 (Humble or Iron)
-* [ ] Complete basic tutorials (nodes, topics)
-* [ ] Write a minimal publisher node (C++)
-* [ ] Write a minimal subscriber node (C++)
-* [ ] Understand:
-
-  * [ ] Topics
-  * [ ] Nodes
-  * [ ] QoS policies
-
-Deliverable:
-
-* Simple pub/sub working locally
-
----
-
-### 2. Custom Message Definitions
-
-Goal: Define structured communication between components
-
-Tasks:
-
-* [ ] Create `robot_msgs` package
-* [ ] Define:
+### Simulation Loop
 
 ```
-RobotState.msg
-float64 x
-float64 y
-float64 vx
-float64 vy
-string robot_id
+while (running) {
+    update(dt);
+    handle_collisions();
+}
 ```
 
-```
-RobotTask.msg
-string robot_id
-float64 target_x
-float64 target_y
-```
+### Robot Model
 
-* [ ] Build and verify message generation
+Each robot has:
 
-Deliverable:
-
-* Custom messages usable across nodes
+* position (x, y)
+* velocity (vx, vy)
+* radius (for collisions)
 
 ---
 
-### 3. Single Robot Node
+## Roadmap
 
-Goal: Simulate one robot publishing state
+### 1. Basic Simulation (MVP)
+
+Goal: single moving robot
 
 Tasks:
 
-* [ ] Implement `robot_node` in C++
-* [ ] Publish `RobotState` at fixed frequency
-* [ ] Add configurable robot_id
-* [ ] Add basic motion logic (e.g., linear movement)
+* [ ] Implement `Vec2` struct
+* [ ] Create `Robot` struct/class
+* [ ] Implement update loop (position += velocity * dt)
+* [ ] Add boundary constraints (walls)
 
 Deliverable:
 
-* One robot publishing valid state messages
+* One robot moving and bouncing in a box
 
 ---
 
-### 4. Simulation Integration (Gazebo)
+### 2. Collision System
 
-Goal: Visualize robot in a simulated environment
+Goal: detect and resolve collisions
 
 Tasks:
 
-* [ ] Install Gazebo
-* [ ] Create simple world file
-* [ ] Spawn robot model
-* [ ] Connect simulation state to ROS topics
+* [ ] Circle–wall collision detection
+* [ ] Circle–circle collision detection
+* [ ] Basic collision response (velocity reflection)
 
 Deliverable:
 
-* Robot visible and moving in simulation
+* Robots do not overlap and respond to impacts
 
 ---
 
-### 5. Multi-Robot System
+### 3. Multi-Robot Support
 
-Goal: Scale from 1 → N robots
+Goal: scale to N robots
 
 Tasks:
 
-* [ ] Launch multiple robot instances
-* [ ] Implement namespacing OR shared topic strategy
-* [ ] Ensure unique robot IDs
-* [ ] Validate concurrent publishing
-
-Design decision (document this):
-
-* Namespaced topics vs shared topic
+* [ ] Store robots in container (vector)
+* [ ] Iterate and update all robots
+* [ ] Handle pairwise collisions
 
 Deliverable:
 
-* Multiple robots publishing simultaneously
+* Multiple robots interacting in same world
 
 ---
 
-### 6. Coordinator Node (Core Logic)
+### 4. Performance Optimization (Important)
 
-Goal: Central system for task assignment
+Goal: avoid O(n^2) bottleneck
 
 Tasks:
 
-* [ ] Implement `coordinator_node`
-* [ ] Subscribe to all robot states
-* [ ] Maintain in-memory state store
-* [ ] Publish `RobotTask` messages
-
-Basic logic:
-
-* Assign random or fixed targets
-* Reassign when target reached
+* [ ] Implement spatial grid OR quadtree
+* [ ] Partition world into cells
+* [ ] Only check nearby collisions
 
 Deliverable:
 
-* End-to-end loop: state → task → robot movement
+* Scalable simulation (100+ robots)
 
 ---
 
-### 7. Coordination & Collision Avoidance
+### 5. Event / Messaging Layer (Optional but High Value)
 
-Goal: Introduce multi-agent reasoning
+Goal: simulate robotics middleware
 
 Tasks:
 
-* [ ] Detect proximity between robots
-* [ ] Implement simple avoidance logic
-* [ ] Adjust velocity or reassign tasks
+* [ ] Implement simple pub/sub system
+* [ ] Robots publish state
+* [ ] Systems subscribe to updates
 
 Deliverable:
 
-* Robots avoid collisions in simulation
+* Decoupled architecture similar to real robotics systems
 
 ---
 
-### 8. Observability (High Impact)
+### 6. Path Planning (Optional Extension)
 
-Goal: Make system debuggable and measurable
+Goal: intelligent movement
 
 Tasks:
 
-* [ ] Add structured logging
-* [ ] Measure:
-
-  * [ ] message latency
-  * [ ] publish frequency
-* [ ] Visualize in RViz
+* [ ] Implement A* on grid
+* [ ] Assign targets to robots
+* [ ] Follow planned path
 
 Deliverable:
 
-* Ability to inspect system behavior in real time
+* Goal-directed robot behavior
 
 ---
 
-### 9. Performance & Failure Handling (Optional)
+### 7. Control Systems (Optional Extension)
 
-Goal: Simulate real-world constraints
+Goal: realistic motion control
 
 Tasks:
 
-* [ ] Introduce artificial delays
-* [ ] Handle dropped messages
-* [ ] Detect stale robot state
-* [ ] Tune QoS settings
+* [ ] Implement PID controller
+* [ ] Smooth movement toward targets
 
 Deliverable:
 
-* System behaves reasonably under degraded conditions
+* Stable, realistic motion
 
 ---
 
-## How to Run (Target)
+## How to Build
 
 ```
-colcon build
-source install/setup.bash
-ros2 launch multi_robot.launch.py
+mkdir build && cd build
+cmake ..
+make
+./robot_sim
 ```
 
 ---
 
-## Design Considerations
+## Design Notes
 
-### Centralized vs Decentralized
-
-* Current system uses centralized coordinator
-* Tradeoffs:
-
-  * Simpler logic
-  * Single point of failure
-
-### Scaling
-
-* Bottlenecks:
-
-  * Coordinator CPU
-  * Network throughput
-
-### Reliability
-
-* ROS QoS tuning required for:
-
-  * reliability
-  * latency
+* Keep modules loosely coupled (physics, entities, simulation)
+* Prefer simple, testable components
+* Optimize only after correctness
 
 ---
 
 ## Future Improvements
 
-* Decentralized coordination
-* Advanced planning (A*, RRT)
-* Sensor fusion
-* Real robot deployment (Raspberry Pi / TurtleBot)
+* Visualization layer
+* Logging + replay system
+* Multi-threaded simulation
+* Integration with robotics frameworks (optional)
 
 ---
 
-## Why This Project Matters
+## What This Demonstrates
 
-This project demonstrates:
-
-* Real-time distributed systems
-* Robotics middleware usage
-* C++ systems programming
-* Multi-agent coordination
-
-It is designed to align with robotics SWE roles, autonomy platforms, and infrastructure teams.
+* Real-time systems design
+* Physics simulation fundamentals
+* Performance optimization
+* Scalable architecture
 
 ---
 
-## Notes (For Myself)
+## Notes (For Development)
 
-* Focus on correctness over realism initially
-* Prioritize end-to-end system early
-* Iterate on complexity after working baseline
-* Document every design decision for interview discussion
+* Start simple; get end-to-end working early
+* Add complexity incrementally
+* Validate each stage before moving on
+* Prioritize clean ar
